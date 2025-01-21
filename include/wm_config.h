@@ -22,8 +22,6 @@
 
 #define SETTINGS_POS  0
 
-extern IPAddress ip;
-extern String devname_lc;
 
 // callback function for status information
 extern std::function<void(const char*)> statusCallback;

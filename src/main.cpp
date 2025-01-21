@@ -143,7 +143,7 @@ void loop()
         ip = WiFi.localIP();
         client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "startup");
         client.publish((((String)TOPICROOT "/" + devname + "/status/version").c_str()), ((String)"version " + VERSION).c_str());
-        client.publish((((String)TOPICROOT "/" + devname + "/status/ip").c_str()), ip.toString());
+        client.publish((((String)TOPICROOT "/" + devname + "/status/ip").c_str()), ip.toString().c_str());
         String confstr = get_pump_setup();
         client.publish((((String)TOPICROOT "/" + devname + "/status/pump_pins").c_str()), confstr.c_str());
 
