@@ -35,11 +35,14 @@ Nachdem diese Message empfangen wurde, befindet sich das Gerät im konfigurierte
 
 Diese Nachricht konfiguriert die erste Uhrzeit des Tages, an der die Pumpe _pumpidx_ (Nummer von 0 bis Pumpenanzahl-1) gestartet werden soll. Der Wert ist im Format hh:mm:ss angegeben. Wird kein Startzeitpunkt gegeben, so gilt 00:00:00 (Tagesbeginn). Alternativ kann anstelle des numerischen Formats auch der Text "`now`" angegeben werden. In diesem Fall wird die aktuelle Zeit als Startzeit verwendet und die Pumpe sofort aktiviert, falls zuvor eine Dauer (oder ein Volumen) gesetzt wurde.
 
-Anmerkung 1: In der aktuellen Implementierung **muss** zunächst der Startzeitpunkt erreicht sein, um die Pumpe für den Tag zu aktivieren. Wenn also ein Startzeitpunkt gesetzt wird, der für den laufenden Tag bereits verstrichen ist, wird die Pumpe an diesem Tag nicht mehr aktiviert. Dies kann in einer zukünftigen Softwareversion anders sein.
+**Anmerkungen:**
 
-Anmerkung 2: Wenn bei Erreichen des Startzeitpunkts noch keine Dauer bzw. kein Volumen (letzteres ist derzeit noch nicht implementiert) gesetzt ist, wird die Startzeit ignoriert. Aus diesem Grund ist es nicht möglich, Startzeit und Volumen als retained Messages vorab zu setzen, denn hier ist die Reihenfolge des Empfangs undefiniert. Stattdessen kann der Befehl `params` verwendet werden, um die Parameter gleichzeitig zu setzen.
+1. Wenn bei Erreichen des Startzeitpunkts noch keine Dauer bzw. kein Volumen (letzteres ist derzeit noch nicht implementiert) gesetzt ist, wird die Startzeit ignoriert. Aus diesem Grund ist es nicht möglich, Startzeit und Volumen als retained Messages vorab zu setzen, denn hier ist die Reihenfolge des Empfangs undefiniert. Stattdessen kann der Befehl `params` verwendet werden, um die Parameter gleichzeitig zu setzen.
+2. In der aktuellen Implementierung **muss** zunächst der Startzeitpunkt erreicht sein, um die Pumpe für den Tag zu aktivieren. Wenn also ein Startzeitpunkt gesetzt wird, der für den laufenden Tag bereits verstrichen ist, wird die Pumpe an diesem Tag nicht mehr aktiviert.
+3. Es gibt eine Race Condition beim Startzeitpunkt `now`. Wenn der Sekundenwert hoch ist (59), kann es passieren, dass die Startzeit „verpasst“ wird und die Pumpe am laufenden Tag nicht mehr aktiviert wird.
+4. Bei der Umstellung zwischen Normal- und Sommerzeit kann es zu unbeabsichtigten Effekten kommen. Die Startzeit wird laufend feldweise mit der tatsächlichen Zeit verglichen, bei Übereinstimmung wird der Zyklus begonnen. Am Tag der Umstellung auf Sommerzeit (März) wird daher, wenn die Startzeit zwischen 02:00:00 und 02:59:59 liegt, die Startbedingung _nicht_ eintreten. Umgekehrt wird beim Übergang auf Normalzeit (Oktober) ein Startzeitpunkt zwischen 00:00:00 und 02:59:59 noch als Sommerzeit interpretiert (Beispiel: 00:00 Uhr Startzeit und 2 Stunden Intervall wird dann um 00 und 02 Uhr Sommerzeit, dann 2 h später um 03 Uhr Normalzeit und danach zu den ungeraden vollen Stunden schalten, an anderen Tagen dagegen zu den geraden Stunden.) 
 
-Anmerkung 3: Bei der Umstellung zwischen Normal- und Sommerzeit kann es zu unbeabsichtigten Effekten kommen. Die Startzeit wird laufend feldweise mit der tatsächlichen Zeit verglichen, bei Übereinstimmung wird der Zyklus begonnen. Am Tag der Umstellung auf Sommerzeit (März) wird daher, wenn die Startzeit zwischen 02:00:00 und 02:59:59 liegt, die Startbedingung _nicht_ eintreten. Umgekehrt wird beim Übergang auf Normalzeit (Oktober) ein Startzeitpunkt zwischen 00:00:00 und 02:59:59 noch als Sommerzeit interpretiert (Beispiel: 00:00 Uhr Startzeit und 2 Stunden Intervall wird dann um 00 und 02 Uhr Sommerzeit, dann 2 h später um 03 Uhr Normalzeit und danach zu den ungeraden vollen Stunden schalten, an anderen Tagen dagegen zu den geraden Stunden.)
+Die in Punkt 2, 3 und 4 beschriebenen Besonderheiten können in einer zukünftigen Softwareversion obsolet sein.
 
 ### `interval/`_pumpidx_ → _interval_
 
@@ -86,7 +89,7 @@ Diese Nachricht löst einen Neustart des µControllers aus, entsprechend einem D
 
 ### `shot/`_pumpidx_ → _duration_
 
-Diese Nachricht startet die Pumpe _pumpidx_ (Nummer von 0 bis Pumpenanzahl-1) zum nächstmöglichen Zeitpunkt für die angegebene Zeitdauer. Der Wert ist als ganzzahliger Sekundenbetrag gegeben. Dieser Befehl ändert nichts an einem laufenden Intervall, sondern wird unabhängig ausgeführt.
+Diese Nachricht startet die Pumpe _pumpidx_ (Nummer von 0 bis Pumpenanzahl-1) zum nächstmöglichen Zeitpunkt für die angegebene Zeitdauer. Der Wert ist als Sekundenbetrag (float) gegeben. Dieser Befehl ändert nichts an einem laufenden Intervall, sondern wird unabhängig ausgeführt.
 
 ## Statusmeldungen
 

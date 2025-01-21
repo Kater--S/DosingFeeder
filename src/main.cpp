@@ -137,7 +137,6 @@ void loop()
 
   if (!client.connected()) {
     reconnect();
-    /***
     showStatus("ready");
     if (do_publishes)
       if (first_connect) {
@@ -150,12 +149,11 @@ void loop()
 
         first_connect = false;
       }
-    client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "online");
-    ***/
+    //client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "online");
   }
   client.loop();    // for MQTT / WiFi
   events();         // for ezTime
-  loop_pumps();
+  loop_pumps();     // for pumps
 
   delay(100);
 }
