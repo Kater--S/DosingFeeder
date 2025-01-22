@@ -182,6 +182,34 @@ bool start_pump(int pumpidx, float duration)
     return enqueue_job(pumpidx, duration * 1000);  // convert float seconds to in milliseconds
 }
 
+bool stop_pump(int pumpidx)
+{
+    set_pump(pumpidx, 0);
+    pump_activation_millis[pumpidx] = 0;
+    pump_starttime_pending[pumpidx] = false;
+    // check if this pump is currently running
+    if (is_working && pump == pumpidx) {
+        is_working = false;
+        set_pump(pump, 0);
+    }
+    publish_pump_params(pumpidx);
+    // remove all jobs for this pump
+    for (int i = 0; i < MAX_JOBS; i++) {
+        if (job_pump[i] == pumpidx) {
+            job_pump[i] = -1;
+            job_duration[i] = 0;
+        }
+    }
+    return true;
+}
+
+void stop_all_pumps()
+{
+    for (int i = 0; i < num_pumps; i++) {
+        stop_pump(i);
+    }
+}
+
 long int lastcall_s = -1;
 int last_hh = -1;
 

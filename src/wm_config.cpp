@@ -155,7 +155,7 @@ void setup_wifi(std::function<void(const char*)> func /* = 0 */) {
     Serial.println("FIRST SETUP");
     if (statusCallback) statusCallback("use AP");
     wm.setConfigPortalTimeout(120);
-    wm.startConfigPortal(devname);
+    wm.startConfigPortal(devname, "12345678");
     if (statusCallback) statusCallback("WiFi ok");
   } else {
     Serial.println("REGULAR SETUP");
@@ -248,58 +248,3 @@ void setup_wifi(std::function<void(const char*)> func /* = 0 */) {
   //// END OF OTA FUNCTIONS
 
 }
-
-#if 0
-void checkzweiterstart() {
-  EEPROM.get(100, zweiterstart);
-  Serial.println("EEprominhalt für Neustart:");
-  Serial.println(zweiterstart);
-        if (zweiterstart > 3) 
-        {
-        zweiterstart =0 ; // fals misst im eeprom steht
-        Serial.println("EEPROM Format");
-        }
-    
-    if (zweiterstart==0) {
-    zweiterstart = 1;
-    EEPROM.put(100, zweiterstart);
-    if (EEPROM.commit()) {
-      Serial.println("erster Start gespeichert");
-    } else {
-      Serial.println("EEPROM error");
-    }
-    Serial.println("erster Neustart");
-    Serial.println(zweiterstart);
-    delay(2000);
-    ESP.restart();
-    }
-
-      if (zweiterstart==1) {
-    zweiterstart = 2;
-    EEPROM.put(100, zweiterstart);
-    if (EEPROM.commit()) {
-      Serial.println("zweiter Start gespeichert");
-    } else {
-      Serial.println("EEPROM error");
-    }
-    Serial.println("zweiter Neustart");
-    Serial.println(zweiterstart);
-    delay(2000);
-    ESP.restart();
-    }
-
- if (zweiterstart==2) {
-    zweiterstart = 0;
-    EEPROM.put(100, zweiterstart);
-    if (EEPROM.commit()) {
-      Serial.println("Dritter Start gespeichert");
-    } else {
-      Serial.println("EEPROM error");
-    }
-    Serial.println("Startet");
-    Serial.println(zweiterstart);
-
- }
-
-}
-#endif

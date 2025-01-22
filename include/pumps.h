@@ -22,7 +22,10 @@ bool set_pump_starttime_now(int pumpidx);
 bool set_pump_interval(int pumpidx, float intv=0);
 bool set_pump_duration(int pumpidx, float dur=0);
 
+// Function declarations for pump control
 bool start_pump(int pumpidx, float duration);
+bool stop_pump(int pump_idx);
+void stop_all_pumps();
 
 //bool enqueue_job(int pumpidx, long int duration);
 //bool dequeue_job(int& index, long int& duration);
@@ -31,3 +34,4 @@ bool start_pump(int pumpidx, float duration);
 //bool is_full();
 
 //void set_pump(int index, int state);
+

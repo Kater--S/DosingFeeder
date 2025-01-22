@@ -25,6 +25,7 @@ extern Timezone myTZ;
 // in wm_config.cpp
 extern char devaddr[20];
 extern char devname[40];
+extern String devname_lc;
 extern IPAddress ip;
 
 

@@ -316,6 +316,19 @@ void mqttReceiveCallback(char* topic, byte* payload, unsigned int length)
     return;
   }
 
+  if (command.startsWith("emerg_stop/")) {
+    int pumpidx = atoi(command.c_str() + command.lastIndexOf("/") + 1);
+    LogTarget.println((String)"pump " + pumpidx + ": perform emergency stop");
+    stop_pump(pumpidx);
+    return;
+  }
+
+  if (command.equals("emerg_stop")) {
+    LogTarget.println((String)"perform emergency stop for all pumps");
+    stop_all_pumps();
+    return;
+  }
+
   if (command.equals("reset")) {
         reset_pump_config();
         String confstr = get_pump_setup();

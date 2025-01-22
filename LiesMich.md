@@ -91,13 +91,19 @@ Diese Nachricht löst einen Neustart des µControllers aus, entsprechend einem D
 
 Diese Nachricht startet die Pumpe _pumpidx_ (Nummer von 0 bis Pumpenanzahl-1) zum nächstmöglichen Zeitpunkt für die angegebene Zeitdauer. Der Wert ist als Sekundenbetrag (float) gegeben. Dieser Befehl ändert nichts an einem laufenden Intervall, sondern wird unabhängig ausgeführt.
 
+### `emerg_stop/`_pumpidx_
+
+Diese Nachricht stoppt die Pumpe _pumpidx_ (Nummer von 0 bis Pumpenanzahl-1) sofort. Anstehende Aufträge für diese Pumpe werden abgebrochen.
+
+### `emerg_stop`
+
+Diese Nachricht stoppt alle Pumpen sofort. Anstehende Aufträge für alle Pumpen werden abgebrochen.
+
 ## Statusmeldungen
 
 Analog zu den Befehlen werden Statusmeldungen über MQTT geschickt.
 
 Die Syntax lautet:
-
-**Topic** `DosingFeeder/DosingFeeder-`_aabbcc_`/`_status_ **→ Message** _paramvalue_
 
 ### `status` → _statustext_
 
