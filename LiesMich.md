@@ -1,7 +1,15 @@
 
 # DosingFeeder
 
-Der DosingFeeder ist ein Controller für ein bis mehrere Peristaltikpumpen. Er besteht aus einem Wemos D1 mini und einem Relais-Breakoutboard pro Pumpe. Zur Spannungsversorgung kann die eingebaute USB-Buchse des Microcontrollers verwendet werden, wenn die Pumpen weniger als 500 mA Strom benötigen. Die Software stellt sicher, dass maximal eine Pumpe gleichzeitig läuft.
+Der DosingFeeder ist ein Controller für ein bis mehrere Peristaltikpumpen. Er besteht aus einem Wemos D1 mini und je Pumpe einem Relais-Breakoutboard.
+
+## Hardware
+
+Zur Spannungsversorgung kann die eingebaute USB-Buchse des Microcontrollers verwendet werden, falls die Pumpen weniger als 500 mA Strom benötigen. Die Software stellt sicher, dass maximal eine Pumpe gleichzeitig läuft.
+
+Wenn die Pumpen mehr als 500 mA benötigen, würde das Wemos-Board überlastet (Diode neben der USB-Buchse wird heiß und brennt ggf. durch). In diesem Fall kann die 5V-Versorgung durch eine externe (USB-)Buchse erfolgen, die dann auch mit dem 5V-Pin des Controllers zu verbinden ist. Auf diese Weise können die USB-üblichen 2 Ampere zum Pumpenbetrieb verwendet werden. Die USB-Buchse des Controllers bleibt dann unbelegt und wird nur zum Programmieren benötigt, falls kein OTA-Update verwendet wird.
+
+Falls die Pumpen mit 5 Volt Betriebsspannung nicht zuverlässig laufen, kann auch eine externe Versorgung mit höherer Spannung erfolgen (Steckernetzteil). Der Controller und die Steuerseite der Relais können mit einem separaten 5V-Spannungsregler aus dieser externen Spannung gespeist werden.
 
 ## Betrieb
 
