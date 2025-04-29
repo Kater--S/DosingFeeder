@@ -19,9 +19,9 @@ Der µController läuft durchgehend und ist dauerhaft mit dem MQTT-Broker verbun
 
 Die Basiskonfiguration läuft über WiFiManager, d.h. der Controller baut, wenn er nicht initialisiert ist, einen eigenen Access Point (ssid: "DosingFeeder-aabbcc" mit unterer Hälfte der MAC-Adresse als sechs Hex-Ziffern, Passwort: "12345678") auf; beim Verbinden damit wird eine Vorschaltseite angezeigt, in der das zu verwendende WiFi-Netzwerk mit Passwort konfiguriert wird, außerdem die Verbindung zum MQTT-Broker. Diese Parameter werden im EEPROM gespeichert und beim nächsten Systemstart verwendet. Um die Einstellungen zu löschen, muss zweimal innerhalb von drei Sekunden gestartet werden.
 
-Der Controller verwendet für die Zeitsteuerung die aktuelle Uhrzeit. Dieser wird über NTP von einem Server bezogen und (fest) mit dem DE-Locale interpretiert, d.h. die Umstellung zwischen Normal- und Sommerzeit folgt den in Deutschland gültigen Regeln. Eine abweichende Locale-Einstellung über das WiFiManager-Setup ist in einer zukünftigen Version denkbar.
+Der Controller verwendet für die Zeitsteuerung die aktuelle Uhrzeit. Diese wird über NTP von einem Server bezogen und (fest) mit dem DE-Locale interpretiert, d.h. die Umstellung zwischen Normal- und Sommerzeit folgt den in Deutschland gültigen Regeln. Eine abweichende Locale-Einstellung über das WiFiManager-Setup ist in einer zukünftigen Version denkbar. Die automatische Erkennung des Locales über die IP-Adresse funktioniert mit der verwendeten Bibliothek derzeit leider nicht.
 
-Die weitere Konfiguration geschieht über MQTT. Die dazu verwendeten Topics werden im Folgenden beschrieben. Im nicht-konfigurierten Zustand wird zunächst ausschließlich das Topic zur Konfiguration der Pumpenhardware empfangen, erst danach folgen die anderen Konfigurations- und Befehl-Topics.
+Die weitere Konfiguration geschieht über MQTT. Die dazu verwendeten Topics werden im Folgenden beschrieben. Im nicht-konfigurierten Zustand wird zunächst ausschließlich das Topic zur Konfiguration der Pumpenhardware empfangen, erst danach werden die anderen Konfigurations- und Befehl-Topics abonniert.
 
 Die Syntax lautet:
 
