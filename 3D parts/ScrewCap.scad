@@ -62,6 +62,7 @@ difference() {
         translate([0,0,(m+1)*P-P/2-eps])
             cylinder(h=1.5, d=D+wt*2+eps);
 
+        if (0)
         translate([0,0,(m+1)*P-P/2+1.5-2*eps])
             cylinder(h=5, d=10);
     }

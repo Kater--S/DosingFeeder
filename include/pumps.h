@@ -18,7 +18,7 @@ String get_pump_setup();
 void loop_pumps();
 
 bool set_pump_starttime(int pumpidx, int hh=0, int mm=0, int ss=0);
-bool set_pump_starttime_now(int pumpidx);
+bool set_pump_starttime_now(int pumpidx, bool repeat = false);  // repeat = true: starttime is repeated on the next day (now_r)
 bool set_pump_interval(int pumpidx, float intv=0);
 bool set_pump_duration(int pumpidx, float dur=0);
 

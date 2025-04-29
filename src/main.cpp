@@ -91,6 +91,10 @@ void setup() {
   }
 #endif
 
+  // ezTime setup
+
+  setDebug(INFO);   // set debug level
+
   // obtain time via NTP
   waitForSync();
 
@@ -118,8 +122,6 @@ void setup() {
 
 void loop()
 {
-  ArduinoOTA.handle();
-
   ss = myTZ.second();
   mm = myTZ.minute();
   hh = myTZ.hour();
@@ -131,7 +133,8 @@ void loop()
       char timestr[20];
       sprintf(timestr, "%02d:%02d:%02d", hh, mm, ss);
       LogTarget.println(timestr);
-      client.publish((((String)TOPICROOT "/" + devname + "/status/time").c_str()), timestr);
+      if (do_publishes)
+        client.publish((((String)TOPICROOT "/" + devname + "/status/time").c_str()), timestr);
     }
   }
 
@@ -151,11 +154,13 @@ void loop()
       }
     //client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "online");
   }
-  client.loop();    // for MQTT / WiFi
-  events();         // for ezTime
-  loop_pumps();     // for pumps
 
-  delay(100);
+  ArduinoOTA.handle();    // for OTA
+  client.loop();          // for MQTT / WiFi
+  events();               // for ezTime
+  loop_pumps();           // for pumps
+
+  delay(100);             // slow down a bit
 }
 
 
@@ -225,14 +230,16 @@ void mqttReceiveCallback(char* topic, byte* payload, unsigned int length)
         payload[length] = 0;  // set string end
         bool ok = config_pumps((char*)payload);
         String confstr = get_pump_setup();
-        client.publish((((String)TOPICROOT "/" + devname + "/status/pump_pins").c_str()), confstr.c_str());
+        if (do_publishes)
+          client.publish((((String)TOPICROOT "/" + devname + "/status/pump_pins").c_str()), confstr.c_str());
 
         if (ok) {
           // now subscribe to all relevant topics
           String topic = (String)TOPICROOT + "/#";
           LogTarget.println((String)"subscribe to all topics: " + topic);
           client.subscribe(topic.c_str());
-          client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "online, active", true);
+          if (do_publishes)
+            client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "online, active", true);
         } else {
           LogTarget.println("error: invalid pump setup");
         }
@@ -332,14 +339,16 @@ void mqttReceiveCallback(char* topic, byte* payload, unsigned int length)
   if (command.equals("reset")) {
         reset_pump_config();
         String confstr = get_pump_setup();
-        client.publish((((String)TOPICROOT "/" + devname + "/status/pump_pins").c_str()), confstr.c_str());
+        if (do_publishes)
+          client.publish((((String)TOPICROOT "/" + devname + "/status/pump_pins").c_str()), confstr.c_str());
         // unsubscribe from all topics
         String topic;
         topic = (String)TOPICROOT + "/#";
         LogTarget.println((String)"unsubscribe from all topics: " + topic);
         client.unsubscribe(topic.c_str());
         // resubscribe to config topics
-        client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "online, wait for config", true);
+        if (do_publishes)
+          client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "online, wait for config", true);
         topic = (String)TOPICROOT + "/" + devname + "/config/pump_pins";
         LogTarget.println((String)"resubscribe to config topic: " + topic);
         client.subscribe(topic.c_str()); // for now, only subscribe to configuration topic
@@ -348,7 +357,6 @@ void mqttReceiveCallback(char* topic, byte* payload, unsigned int length)
   if (command.equals("restart")) {
         ESP.restart();
   }
-
 }
 
 void processDuration(int pumpidx, char* payload, int length)
@@ -384,9 +392,9 @@ void processInterval(int pumpidx, char* payload, int length)
 
 void processStarttime(int pumpidx, char* payload, int length)
 {
-  if (strncasecmp("now", payload, 3) == 0) {
+  if ((strncasecmp("now", payload, 3) == 0) || (strncasecmp("now_r", payload, 5) == 0)) {
     LogTarget.println((String) "pump " + pumpidx + ": set starttime to now");
-    if (!set_pump_starttime_now(pumpidx)) {
+    if (!set_pump_starttime_now(pumpidx, (strncasecmp("now_r", payload, 5) == 0))) {
       LogTarget.println((String) "Error");
     }
   } else {
@@ -411,8 +419,10 @@ void reconnect() {
         String topic = (String)TOPICROOT + "/#";
         LogTarget.println((String)"subscribe to all topics: " + topic);
         client.subscribe(topic.c_str());
-        client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "online, active", true);
+        if (do_publishes)
+          client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "online, active", true);
       } else {
+        if (do_publishes)
         client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "online, wait for config", true);
         String topic = (String)TOPICROOT + "/" + devname + "/config/pump_pins";
         LogTarget.println((String)"subscribe to config topic: " + topic);

@@ -9,7 +9,7 @@ Der µController läuft durchgehend und ist dauerhaft mit dem MQTT-Broker verbun
 
 ## Konfiguration
 
-Die Basiskonfiguration läuft über WiFiManager, d.h. der Controller baut, wenn er nicht initialisiert ist, einen eigenen Access Point (ssid: "DosingFeeder-aabbcc" mit unterer Hälfte der MAC-Adresse als sechs Hex-Ziffern) auf; beim Verbinden damit wird eine Vorschaltseite angezeigt, in der das zu verwendende WiFi-Netzwerk mit Passwort konfiguriert wird, außerdem die Verbindung zum MQTT-Broker. Diese Parameter werden im EEPROM gespeichert und beim nächsten Systemstart verwendet. Um die Einstellungen zu löschen, muss zweimal innerhalb von drei Sekunden gestartet werden.
+Die Basiskonfiguration läuft über WiFiManager, d.h. der Controller baut, wenn er nicht initialisiert ist, einen eigenen Access Point (ssid: "DosingFeeder-aabbcc" mit unterer Hälfte der MAC-Adresse als sechs Hex-Ziffern, Passwort: "12345678") auf; beim Verbinden damit wird eine Vorschaltseite angezeigt, in der das zu verwendende WiFi-Netzwerk mit Passwort konfiguriert wird, außerdem die Verbindung zum MQTT-Broker. Diese Parameter werden im EEPROM gespeichert und beim nächsten Systemstart verwendet. Um die Einstellungen zu löschen, muss zweimal innerhalb von drei Sekunden gestartet werden.
 
 Der Controller verwendet für die Zeitsteuerung die aktuelle Uhrzeit. Dieser wird über NTP von einem Server bezogen und (fest) mit dem DE-Locale interpretiert, d.h. die Umstellung zwischen Normal- und Sommerzeit folgt den in Deutschland gültigen Regeln. Eine abweichende Locale-Einstellung über das WiFiManager-Setup ist in einer zukünftigen Version denkbar.
 
@@ -33,12 +33,14 @@ Nachdem diese Message empfangen wurde, befindet sich das Gerät im konfigurierte
 
 ### `starttime/`_pumpidx_ → _timeofday_
 
-Diese Nachricht konfiguriert die erste Uhrzeit des Tages, an der die Pumpe _pumpidx_ (Nummer von 0 bis Pumpenanzahl-1) gestartet werden soll. Der Wert ist im Format hh:mm:ss angegeben. Wird kein Startzeitpunkt gegeben, so gilt 00:00:00 (Tagesbeginn). Alternativ kann anstelle des numerischen Formats auch der Text "`now`" angegeben werden. In diesem Fall wird die aktuelle Zeit als Startzeit verwendet und die Pumpe sofort aktiviert, falls zuvor eine Dauer (oder ein Volumen) gesetzt wurde.
+Diese Nachricht konfiguriert die erste Uhrzeit des Tages, an der die Pumpe _pumpidx_ (Nummer von 0 bis Pumpenanzahl-1) gestartet werden soll. Der Wert ist im Format hh:mm:ss angegeben. Wird kein Startzeitpunkt gegeben, so gilt 00:00:00 (Tagesbeginn). 
+Alternativ kann anstelle des numerischen Formats auch der Text "`now`" angegeben werden. In diesem Fall wird die aktuelle Zeit als Startzeit verwendet und die Pumpe sofort aktiviert, falls _zuvor_ eine Dauer (oder ein Volumen) gesetzt wurde.
+Die mit `now` bestimmte Startzeit gilt nur für den aktuellen Tag, für die folgenden Tage wird 00:00:00 (Tagesbeginn) verwendet. Soll die Startzeit auch an den folgenden Tagen gelten soll, muss stattdessen `now_r` verwendet werden.
 
 **Anmerkungen:**
 
 1. Wenn bei Erreichen des Startzeitpunkts noch keine Dauer bzw. kein Volumen (letzteres ist derzeit noch nicht implementiert) gesetzt ist, wird die Startzeit ignoriert. Aus diesem Grund ist es nicht möglich, Startzeit und Volumen als retained Messages vorab zu setzen, denn hier ist die Reihenfolge des Empfangs undefiniert. Stattdessen kann der Befehl `params` verwendet werden, um die Parameter gleichzeitig zu setzen.
-2. In der aktuellen Implementierung **muss** zunächst der Startzeitpunkt erreicht sein, um die Pumpe für den Tag zu aktivieren. Wenn also ein Startzeitpunkt gesetzt wird, der für den laufenden Tag bereits verstrichen ist, wird die Pumpe an diesem Tag nicht mehr aktiviert.
+2. In der aktuellen Implementierung **muss** zunächst der Startzeitpunkt erreicht sein, um die Pumpe für den Tag zu aktivieren. Wenn also ein Startzeitpunkt gesetzt wird, der für den laufenden Tag bereits verstrichen ist, wird die Pumpe an diesem Tag nicht mehr aktiviert. Dies betrifft auch die `now`-Variante, die die Startzeit auf die aktuelle Uhrzeit setzt.
 3. Es gibt eine Race Condition beim Startzeitpunkt `now`. Wenn der Sekundenwert hoch ist (59), kann es passieren, dass die Startzeit „verpasst“ wird und die Pumpe am laufenden Tag nicht mehr aktiviert wird.
 4. Bei der Umstellung zwischen Normal- und Sommerzeit kann es zu unbeabsichtigten Effekten kommen. Die Startzeit wird laufend feldweise mit der tatsächlichen Zeit verglichen, bei Übereinstimmung wird der Zyklus begonnen. Am Tag der Umstellung auf Sommerzeit (März) wird daher, wenn die Startzeit zwischen 02:00:00 und 02:59:59 liegt, die Startbedingung _nicht_ eintreten. Umgekehrt wird beim Übergang auf Normalzeit (Oktober) ein Startzeitpunkt zwischen 00:00:00 und 02:59:59 noch als Sommerzeit interpretiert (Beispiel: 00:00 Uhr Startzeit und 2 Stunden Intervall wird dann um 00 und 02 Uhr Sommerzeit, dann 2 h später um 03 Uhr Normalzeit und danach zu den ungeraden vollen Stunden schalten, an anderen Tagen dagegen zu den geraden Stunden.) 
 

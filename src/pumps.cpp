@@ -1,4 +1,3 @@
-
 #include <Arduino.h>
 
 #include "pumps.h"
@@ -18,6 +17,7 @@ uint8_t pump_pins[MAX_PUMPS];              // DOUT port numbers for pumps, D4 = 
 int pump_starttime_hh[MAX_PUMPS];
 int pump_starttime_mm[MAX_PUMPS];
 int pump_starttime_ss[MAX_PUMPS];
+bool pump_starttime_repeat[MAX_PUMPS];
 long int pump_activation_millis[MAX_PUMPS];
 float pump_duration[MAX_PUMPS];
 float pump_interval[MAX_PUMPS];
@@ -41,6 +41,10 @@ bool is_full();
 void set_pump(int pump, int state);
 void publish_pump_params(int pumpidx);
 void publish_jobs_queue();
+
+
+// functions
+
 void init_data()
 {
     // initialize bookkeeping
@@ -48,6 +52,7 @@ void init_data()
         pump_starttime_hh[i] = 0;
         pump_starttime_mm[i] = 0;
         pump_starttime_ss[i] = 0;
+        pump_starttime_repeat[i] = false;   // repeat == true: starttime is repeated on the next day (now_r), otherwise set to 00:00:00
         pump_activation_millis[i] = 0;
         pump_duration[i] = 0;
         pump_interval[i] = 0;
@@ -147,9 +152,9 @@ bool set_pump_starttime(int pumpidx, int hh, int mm, int ss)
     return true;
 }
 
-bool set_pump_starttime_now(int pumpidx)
+bool set_pump_starttime_now(int pumpidx, bool repeat /*= false*/)
 {
-    if (pr) LogTarget.println((String)"set pump starttime now: pump " + pumpidx);
+    if (pr) LogTarget.println((String)"set pump starttime now: pump " + pumpidx + ", repeat = " + repeat);
     return set_pump_starttime(pumpidx, myTZ.hour(), myTZ.minute(), myTZ.second());
 }
 
@@ -231,6 +236,11 @@ void loop_pumps()
             LogTarget.println((String)"daystart: reset all start times");
             for (int i=0; i < num_pumps; i++) {
                 pump_starttime_pending[i] = true;
+                if (!pump_starttime_repeat[i]) {    // repeat == true: starttime is repeated on the next day (now_r), otherwise set to 00:00:00
+                    pump_starttime_hh[i] = 0;
+                    pump_starttime_mm[i] = 0;
+                    pump_starttime_ss[i] = 0;
+                }
                 publish_pump_params(i);
             }
         }
@@ -244,7 +254,7 @@ void loop_pumps()
         int ss = -1;
         for (int i=0; i < num_pumps; i++) {
             if (!pump_starttime_pending[i]) {
-                LogTarget.println((String)"pump " + i + " starttime not pending");
+                LogTarget.println((String)"pump " + i + " starttime already activated, cycling");
                 continue;
             }
             LogTarget.println((String)"check pump " + i + ": pending starttime hour: should be " + pump_starttime_hh[i] + ", is " + hh);
@@ -262,6 +272,7 @@ void loop_pumps()
                             LogTarget.println((String)"      interval " + pump_interval[i] + " s, duration " + pump_duration[i] + " s");
                             pump_activation_millis[i] = now;
                             pump_starttime_pending[i] = false;
+                            publish_pump_params(i);
                         } else {
                             LogTarget.println((String)"pump " + i + " duration is " + pump_duration[i] + ", nop");
                         }
@@ -282,7 +293,7 @@ void loop_pumps()
                 pump_activation_millis[i] += pump_interval[i] * 1000;
                 if (pump_activation_millis[i] <= now) {
                     // next activation is also due -- problem
-                    // only warning, no action
+                    // only warning, no remedial action
                     LogTarget.println((String)"Cannot keep up with schedule for pump #" + i + ": already lagging " + (now-pump_activation_millis[i])/1000 + " s, with interval " + pump_interval[i] + " s and duration " + pump_duration[i] + " s");
                     // ??publish a warning via MQTT??
                 }
@@ -384,18 +395,21 @@ void set_pump(int pump, int state)
     if (pump >= num_pumps) return;
     LogTarget.println((String)"set pump #" + pump + " = Pin " + pump_pins[pump] + " to " + state);
     digitalWrite(pump_pins[pump], state);
-    client.publish((((String)TOPICROOT "/" + devname + "/status/pump/" + pump + "/state").c_str()), state ? "1":"0");
+    if (do_publishes)
+        client.publish((((String)TOPICROOT "/" + devname + "/status/pump/" + pump + "/state").c_str()), state ? "1":"0");
 }
 
 void publish_pump_params(int pumpidx)
 {
-    char params[80];
-    snprintf(params, 80, "%02d:%02d:%02d;i%.1f;d%.1f;%s", 
-                pump_starttime_hh[pumpidx], pump_starttime_mm[pumpidx], pump_starttime_ss[pumpidx], 
+    if (do_publishes) {
+        char params[80];
+        snprintf(params, 80, "%02d:%02d:%02d;i%.1f;d%.1f;%s", 
+                    pump_starttime_hh[pumpidx], pump_starttime_mm[pumpidx], pump_starttime_ss[pumpidx], 
                 pump_interval[pumpidx], 
                 pump_duration[pumpidx], 
-                (pump_starttime_pending[pumpidx] ? "pending":"not pending"));
-    client.publish((((String)TOPICROOT "/" + devname + "/status/pump/" + pump + "/params").c_str()), params);
+                (pump_starttime_pending[pumpidx] ? "pending":"activated"));
+        client.publish((((String)TOPICROOT "/" + devname + "/status/pump/" + pumpidx + "/params").c_str()), params);
+    }
 }
 
 void publish_jobs_queue()
@@ -406,5 +420,6 @@ void publish_jobs_queue()
         s += (String)"(" + job_pump[(curr+i) % MAX_JOBS] + "," + job_duration[(curr+i) % MAX_JOBS] + ") ";
     }
     s += (String)"]";
-    client.publish((((String)TOPICROOT "/" + devname + "/status/queue").c_str()), s.c_str());
+    if (do_publishes)
+        client.publish((((String)TOPICROOT "/" + devname + "/status/queue").c_str()), s.c_str());
 }
