@@ -143,12 +143,12 @@ void loop()
     showStatus("ready");
     if (do_publishes)
       if (first_connect) {
-        ip = WiFi.localIP();
         client.publish((((String)TOPICROOT "/" + devname + "/status").c_str()), "startup");
-        client.publish((((String)TOPICROOT "/" + devname + "/status/version").c_str()), ((String)"version " + VERSION).c_str());
-        client.publish((((String)TOPICROOT "/" + devname + "/status/ip").c_str()), ip.toString().c_str());
+        client.publish((((String)TOPICROOT "/" + devname + "/status/version").c_str()), ((String)"version " + VERSION).c_str(), true);
+        ip = WiFi.localIP();
+        client.publish((((String)TOPICROOT "/" + devname + "/status/ip").c_str()), ip.toString().c_str(), true);
         String confstr = get_pump_setup();
-        client.publish((((String)TOPICROOT "/" + devname + "/status/pump_pins").c_str()), confstr.c_str());
+        client.publish((((String)TOPICROOT "/" + devname + "/status/pump_pins").c_str()), confstr.c_str(), true);
 
         first_connect = false;
       }
@@ -286,17 +286,20 @@ void mqttReceiveCallback(char* topic, byte* payload, unsigned int length)
       LogTarget.println((String)" token: " + token);
       switch (token[0]) {
         case 'i': // interval
-                  LogTarget.println((String)" -> interval " + (token+1));
-                  processInterval(pumpidx, token+1, strlen(token+1));
+                  token += 1; // skip prefix char
+                  LogTarget.println((String)" -> interval " + (token));
+                  processInterval(pumpidx, token, strlen(token));
                   break;
         case 'd': // duration
-                  LogTarget.println((String)" -> duration " + (token+1));
-                  processDuration(pumpidx, token+1, strlen(token+1));
+                  token += 1; // skip prefix char
+                  LogTarget.println((String)" -> duration " + (token));
+                  processDuration(pumpidx, token, strlen(token));
                   break;
         /*
         case 's': // size
-                  LogTarget.println((String)" -> size " + token+1);
-                  processSize(pumpidx, token+1, strlen(token+1));
+                  token += 1; // skip prefix char
+                  LogTarget.println((String)" -> size " + token);
+                  processSize(pumpidx, token   s, strlen(token));
                   break;
         */
         default:  // unknown id char
