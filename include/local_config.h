@@ -13,9 +13,6 @@ const bool do_publishes = true;
 // you may change the default topic root "DosingFeeder" to something different here
 //#define TOPICROOT "DosingFeeder"
 
-// you may change the default topic root "DosingFeeder" to something different here
-//#define TOPICROOT "DosingFeeder"
-
 // you may set LOG_TELNET here to 1 if you want logging via telnet (Port 23):
 //#define LOG_TELNET  1
 

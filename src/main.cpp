@@ -266,7 +266,7 @@ void mqttReceiveCallback(char* topic, byte* payload, unsigned int length)
 
   if (command.startsWith("params/")) {
     // need to copy into internal buffer because MQTT buffer is overwritten on publishes in-between
-    const int PARAMSIZE = 20;
+    const int PARAMSIZE = 32;
     char params[PARAMSIZE];
     strncpy(params, (char*)payload, PARAMSIZE);   
     int newlen = min((int)length, PARAMSIZE-1);
@@ -386,7 +386,7 @@ void processInterval(int pumpidx, char* payload, int length)
     LogTarget.println((String)"error parsing duration value for pump " + pumpidx + ": value = " + value);
     return;
   }
-  value = max(0.0f, min(24.0f * 3600 - 1, value));
+  value = max(0.0f, min(24.0f * 3600.0f - .00001f, value));
   LogTarget.println((String) "pump " + pumpidx + ": set interval = " + value);
   if (!set_pump_interval(pumpidx, value)) {
     LogTarget.println((String) "Error");
